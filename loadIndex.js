@@ -14,10 +14,10 @@ function load(path) {
 
       const newlink = $("<a />", {
       text: path,
-      href:`/${path}.html`
+      href:`/${path.toLowerCase()}.html`
       });
 
-      $("ol").append($('\n<li>\n\n').append(newlink));
+      $("ol").append($(`\n<li id = ${path}>\n\n`).append(newlink));
 
       fs.writeFile(`./public/index.html`, window.document.documentElement.outerHTML,
                    function (error){

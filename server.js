@@ -6,7 +6,7 @@ const querystring = require('querystring');
 const buildHtml = require("./HTML_builder.js");
 const load = require("./loadIndex.js");
 const edit = require("./editFile.js");
-// const remove = require("./remove.js");
+const remove = require("./remove.js");
 
 const server = http.createServer((req,res) => {
 
@@ -83,6 +83,8 @@ const server = http.createServer((req,res) => {
           res.writeHead(500,{"error": `resource ${req.url} does not exist`},{"Content-Type": "application/json"});
           res.end();
         } else{
+          console.log(name);
+          remove(name);
           res.writeHead(200,{"success": "true"},{"Content-Type": "application/json"});
           res.end();
         }

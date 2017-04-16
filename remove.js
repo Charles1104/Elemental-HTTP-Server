@@ -1,4 +1,4 @@
-function remove() {
+function remove(path) {
 
   var jsdom = require("jsdom");
   var fs = require("fs");
@@ -7,10 +7,11 @@ function remove() {
     jsdom.env(data, [], function (errors, window) {
       var $ = require('jquery')(window);
 
-      // const test = $("#Hydrogen").text();
+      const number_elements = $(".tableOfContents > li").length;
 
-      $("#Hydrogen").remove();
+      $("h3").html(`These are ${number_elements - 1}`);
 
+      $(`#${path}`).remove();
 
       fs.writeFile(`./public/index.html`, window.document.documentElement.outerHTML,
                    function (error){
@@ -20,6 +21,4 @@ function remove() {
   });
 }
 
-remove();
-
-// module.exports = remove;
+module.exports = remove;
