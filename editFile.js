@@ -12,10 +12,9 @@ function edit(file, name, symbol, number, description) {
       $("h3").text(number);
       $("p:first").text(description);
 
-      fs.writeFile(file, window.document.documentElement.outerHTML,
-                   function (error){
-          if (error) throw error;
-      });
+      fs.writeFile(file, window.document.documentElement.outerHTML,function (error){
+        if (error) throw error;
+        });
     });
   });
 }
