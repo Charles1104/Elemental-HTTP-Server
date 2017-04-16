@@ -5,6 +5,8 @@ const fs = require("fs");
 const querystring = require('querystring');
 const buildHtml = require("./HTML_builder.js");
 const load = require("./loadIndex.js");
+const edit = require("./editFile.js");
+// const remove = require("./remove.js");
 
 const server = http.createServer((req,res) => {
 
@@ -33,35 +35,61 @@ const server = http.createServer((req,res) => {
     }
   }
 
+  req.on("data", (data)=> {
+
+    const parsed = querystring.parse(data.toString());
+    const keys = Object.keys(parsed);
+
+    const name = parsed.name;
+    const symbol = parsed.symbol;
+    const number = parsed.number;
+    const description = parsed.description;
+
 // POST
-  if (req.method === "POST"){
+    if (req.method === "POST"){
 
-    req.on("data", (data)=> {
-      const parsed_post = querystring.parse(data.toString());
-      const keys = Object.keys(parsed_post);
+      if (keys[0] === "name"){
+        var filename = `./public/${name.toLowerCase()}.html`;
+        var stream = fs.createWriteStream(filename);
+        stream.on("open", function(){
+          var html = buildHtml(name, symbol, number, description);
+          stream.end(html);
+        });
+        load(`${name}`);
+        res.writeHead(200,{"success": "true"},{"Content-Type": "application/json"});
+        res.end();
+      }
+    }
 
-      const name = parsed_post.name;
-      const symbol = parsed_post.symbol;
-      const number = parsed_post.number;
-      const description = parsed_post.description;
-
-        if (keys[0] === "name"){
-          var filename = `./public/${name}.html`;
-          var stream = fs.createWriteStream(filename);
-          stream.on("open", function(){
-            var html = buildHtml(name, symbol, number, description);
-            stream.end(html);
-          });
-          load(`${name}`);
+  // PUT
+    if (req.method === "PUT"){
+      fs.readFile(`./public${req.url}`, 'utf8',function(err, data){
+        if(err){
+          res.writeHead(500,{"error": `resource ${req.url} does not exist`},{"Content-Type": "application/json"});
+          res.end();
         }
-    });
-  }
+        else {
+          edit(`./public${req.url}`,name, symbol, number, description);
+          res.writeHead(200,{"success": "true"},{"Content-Type": "application/json"});
+          res.end();
+        }
+      });
+    }
 
-// PUT
- if (req.method === "PUT"){
+  // DELETE
+    if (req.method === "DELETE"){
+      fs.unlink(`./public${req.url}`, function(err){
+        if(err){
+          res.writeHead(500,{"error": `resource ${req.url} does not exist`},{"Content-Type": "application/json"});
+          res.end();
+        } else{
+          res.writeHead(200,{"success": "true"},{"Content-Type": "application/json"});
+          res.end();
+        }
+      });
+    }
 
- }
-
+  });
 });
 
 server.listen(3000, () => {
