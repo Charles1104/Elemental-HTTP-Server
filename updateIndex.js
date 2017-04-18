@@ -1,9 +1,7 @@
 function load(path, operation) {
 
-
   var jsdom = require("jsdom");
   var fs = require("fs");
-
 
   fs.readFile(`./public/index.html`, 'utf8', function(error, data) {
     jsdom.env(data, [], function (errors, window) {

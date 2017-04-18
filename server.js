@@ -11,9 +11,24 @@ const auth = require("./auth.js");
 const server = http.createServer((req,res) => {
 
 //HELPER FUNCTION
-  var read = (file,utf8) => {
-    return fs.readFile(file,utf8,function(err, data){
-      res.end(data);
+  var read = (file, req) => {
+    var format = req.url.slice(req.url.lastIndexOf(".") + 1);
+    if (format !== "html" && format !== "css"){
+      format = "html";
+    }
+    return fs.readFile(file,'utf8',function(err, data){
+      if(err){
+        fs.readFile("./public/404.html",'utf8',function(err, data){
+          if(err){
+            res.writeHead(503,{"Content-Type": "application/json"});
+            res.end(JSON.stringify({"error": "server issue"}));
+          }
+        });
+      }
+      else {
+        res.writeHead(200,{"Content-Type": `text/${format}`});
+        res.end(data);
+      }
     });
   };
 
@@ -21,17 +36,10 @@ const server = http.createServer((req,res) => {
   if (auth(req,res) === true){
     if (req.method === "GET"){
       if(req.url === "/"){
-        read(`./public/index.html`, 'utf8');
+        read(`./public/index.html`, req);
       }
       else{
-        fs.readFile(`./public${req.url}`, 'utf8',function(err, data){
-          if(err){
-            read("./public/404.html", 'utf8');
-          }
-          else {
-          res.end(data);
-          }
-        });
+        read(`./public${req.url}`, req);
       }
     }
   }
@@ -53,42 +61,49 @@ const server = http.createServer((req,res) => {
       if (req.method === "POST"){
         if (keys[0] === "name"){
           var filename = `./public/${name.toLowerCase()}.html`;
-          var stream = fs.createWriteStream(filename);
-          stream.on("open", function(){
-            var html = buildHtml(name, symbol, number, description);
-            stream.end(html);
+          fs.stat(filename, function(err, stats){
+            if (!stats){
+              var stream = fs.createWriteStream(filename);
+              stream.on("open", function(){
+                var html = buildHtml(name, symbol, number, description);
+                stream.end(html);
+              });
+              updateIndex(name,"add");
+              res.writeHead(200,{"Content-Type": "application/json"});
+              res.end(JSON.stringify({"success": "true"}));
+            } else {
+              res.writeHead(401,{"Content-Type": "application/json"});
+              res.end(JSON.stringify({"success": "false. File already exists"}));
+            }
           });
-          updateIndex(name,"add");
-          res.writeHead(200,{"success": "true"},{"Content-Type": "application/json"});
-          res.end();
         }
       }
 
-    // PUT
+      // PUT
       if (req.method === "PUT"){
         fs.readFile(`./public${req.url}`, 'utf8',function(err, data){
           if(err){
-            res.writeHead(500,{"error": `resource ${req.url} does not exist`},{"Content-Type": "application/json"});
-            res.end();
+            res.writeHead(500,{"Content-Type": "application/json"});
+            res.end(JSON.stringify({"error": `resource ${req.url} does not exist`}));
           }
           else {
             edit(`./public${req.url}`,name, symbol, number, description);
-            res.writeHead(200,{"success": "true"},{"Content-Type": "application/json"});
-            res.end();
+            res.writeHead(200, {"Content-Type": "application/json"});
+            res.end(JSON.stringify({"success": "true"}));
           }
         });
       }
 
-    // DELETE
+      // DELETE
       if (req.method === "DELETE"){
         fs.unlink(`./public${req.url}`, function(err){
           if(err){
-            res.writeHead(500,{"error": `resource ${req.url} does not exist`},{"Content-Type": "application/json"});
-            res.end();
+            res.writeHead(500,{"Content-Type": "application/json"});
+            res.end(JSON.stringify({"error": `resource ${req.url} does not exist`}));
           } else{
             updateIndex(name,"remove");
-            res.writeHead(200,{"success": "true"},{"Content-Type": "application/json"});
-            res.end();
+            res.writeHead(200,{"Content-Type": "application/json"});
+            res.end(JSON.stringify({"success": "true"}));
           }
         });
       }

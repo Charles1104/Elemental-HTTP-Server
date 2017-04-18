@@ -7,7 +7,7 @@ function auth(req, res) {
   if(!auth) {
     res.statusCode = 401;
     res.setHeader('WWW-Authenticate', 'Basic realm="Secure Area"');
-    res.end('<html><body>Need some creds son</body></html>');
+    res.end('<html><body>Invalid Authentification Credentials</body></html>');
   }
 
   else if(auth) {
@@ -16,9 +16,7 @@ function auth(req, res) {
     var plain_auth = buf.toString();
 
     console.log("Decoded Authorization ", plain_auth);
-
-    // At this point plain_auth = "username:password"
-
+    // At this point, plain_auth = "username:password"
     var creds = plain_auth.split(':');
     var username = creds[0];
     var password = creds[1];
